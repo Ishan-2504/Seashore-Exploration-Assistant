@@ -1,75 +1,80 @@
 import argparse
 import pickle
-from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
-from langchain_community.document_loaders import TextLoader
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import SentenceTransformerEmbeddings
-import os
-import pickle
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import FAISS
+from langchain.document_loaders import TextLoader
 from langchain.chains import ConversationalRetrievalChain
-
-# pip install -U langchain-community
-from langchain_community.vectorstores import FAISS
-
-# pip install -U langchain-huggingface
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
-
-from langchain_community.llms import HuggingFaceHub
-from langchain_huggingface import HuggingFaceEndpoint
-
 from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferMemory
-from langchain.text_splitter import CharacterTextSplitter
 from langchain.schema import Document
-from langchain.chains import create_history_aware_retriever
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.prompts import MessagesPlaceholder
-from langchain.schema import StrOutputParser
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.llms import HuggingFaceHub
+from langchain.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-def format_docs(docs):
-        return "\n\n".join([d.page_content for d in docs])
+import pyttsx3
 
-file = open("vectorstore.pkl",'rb')
-vector_store = pickle.load(file)
-file.close()
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+engine = pyttsx3.init()
 
+# Load vector store
+with open("vectorstore.pkl", 'rb') as file:
+    vector_store = pickle.load(file)
 
+# Create retriever from the vector store
 retriever = vector_store.as_retriever()
 
+# Define Hugging Face model with HuggingFaceHub
 llm = HuggingFaceHub(
-    repo_id="meta-llama/Meta-Llama-3-8B-Instruct",
+    repo_id="meta-llama/Llama-3.2-1B",  # Replace with your model if needed
     task="text-generation",
     model_kwargs={
         "max_new_tokens": 128,
         "top_k": 5,
         "temperature": 0.2,
         "repetition_penalty": 1.03,
-        "stream" : True,
+        "stream": False,  # Set stream to False for synchronous output
     },
-    huggingfacehub_api_token= "[hugging face api key]",
+    huggingfacehub_api_token="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",  # Replace with your token
 )
 
-template = """Answer the question based only on the following context and if you do not know the answer just answer 'I do not have this information':
+
+
+# Define prompt template for the retrieval
+template = """
+You are a conversational and engaging assistant. Engage in a thoughtful dialogue with the user, responding naturally to maintain a flowing conversation.  However, answer factual questions strictly based on the information provided in the 'context.' If the answer isn't in the context, respond with: 'I don’t have that information right now, but feel free to ask something else!'
 
     {context}
 
     Question: {question}
-    """
+"""
+
+# Create a chat prompt from the template
 prompt = ChatPromptTemplate.from_template(template)
-model = llm
+
+# Create the chain that processes the question
 chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
-        | prompt
-        | model
-        | StrOutputParser()
-    )
+    {"context": retriever | (lambda docs: "\n\n".join([d.page_content for d in docs])), "question": RunnablePassthrough()}
+    | prompt
+    | llm
+)
+
+# Define function to extract the answer from the response
 def extract_answer(response):
     if "Answer:" in response:
         return response.split("Answer:")[1].strip() 
-    return response.strip() 
-user_message = "Do you know where NSUT in Delhi"
+    return response.strip()
+
+# Example user message
+user_message = "Do you know where NSUT in Delhi is?"
 bot_message = chain.invoke(user_message)
+print(bot_message)
 
 print(extract_answer(bot_message))
+# engine.say(extract_answer(bot_message))
+# engine.runAndWait()
 

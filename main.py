@@ -36,7 +36,7 @@ llm = HuggingFaceHub(
         "repetition_penalty": 1.03,
         "stream": True,
     },
-    huggingfacehub_api_token="!!!Replace with hugging face api key!!!",
+    huggingfacehub_api_token="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",
 )
 
 template = """Answer the question based only on the following context and if you do not know the answer just answer 'I do not have this information':

@@ -3,7 +3,6 @@ import pickle
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 import os
 import pickle
 from langchain.chains import ConversationalRetrievalChain
@@ -13,7 +12,6 @@ from langchain_community.vectorstores import FAISS
 
 # pip install -U langchain-huggingface
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
 
 from langchain_community.llms import HuggingFaceHub
 from langchain_huggingface import HuggingFaceEndpoint
@@ -28,7 +26,7 @@ from langchain_core.prompts import MessagesPlaceholder
 
 
 
-file = open("vectorstore.pkl",'rb')
+file = open("Seashore-Exploration-Assistant\\vectorstore.pkl",'rb')
 vector_store = pickle.load(file)
 file.close()
 

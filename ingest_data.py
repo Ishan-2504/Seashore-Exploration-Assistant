@@ -3,7 +3,7 @@ import pickle
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Build vector store for a LLM')
@@ -38,7 +38,7 @@ text_splitter = CharacterTextSplitter(
 documents = text_splitter.split_documents(all_docs)
 print(documents[0])
 # Create embeddings
-embeddings = SentenceTransformerEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 if args.verbose:
     print("Embeddings created")
 
